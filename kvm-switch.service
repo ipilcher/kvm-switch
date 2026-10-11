@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Ian Pilcher <arequipeno@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Unit]
+Description=KVM switch event handler
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.local/bin/kvm-switch.py
+
+[Install]
+WantedBy=graphical-session.target
