@@ -34,17 +34,16 @@ DOWNSTREAM_USB_MODEL: typing.Final = '0101'
 
 ## Logging
 
-When stderr is a terminal, `kvm-switch.py` logs to stderr at `DEBUG` level.
-Otherwise (e.g. when run under systemd), it logs to syslog (journald) at
-`INFO` level.  Both the destination and the level can be overridden with
-environment variables:
+When running in a terminal, **kvm-switch** logs to `stderr` at `DEBUG` level.
+Otherwise (e.g. when run under **systemd**), it logs to the system log
+(**journald**) at `INFO` level.  Both the destination and the level can be
+overridden with environment variables:
 
-* `KVM_SWITCH_LOG_DEST`: `auto` (default), `stderr`, or `syslog` (aliases:
-  `journal`, `journald`)
+* `KVM_SWITCH_LOG_DEST`: `stderr` or `syslog`
 * `KVM_SWITCH_LOG_LEVEL`: `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL`
 
-For example, to force syslog logging at `DEBUG` level, add the following to
-the `[Service]` section of `kvm-switch.service`:
+For example, to force **kvm-switch** to log to the system log at `DEBUG` level,
+add the following to the `[Service]` section of `kvm-switch.service`:
 
 ```ini
 Environment=KVM_SWITCH_LOG_DEST=syslog

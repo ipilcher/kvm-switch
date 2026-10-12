@@ -19,28 +19,18 @@ hub_devpath: str | None = None
 logger: typing.Final = logging.getLogger('kvm-switch')
 
 def setup_logging() -> None:
-    dest = os.environ.get('KVM_SWITCH_LOG_DEST', 'auto').strip().lower()
-    if dest == 'auto':
-        dest = 'stderr' if sys.stderr.isatty() else 'syslog'
-    elif dest in ('journal', 'journald'):
-        dest = 'syslog'
-    elif dest not in ('syslog', 'stderr'):
-        print(f'Invalid KVM_SWITCH_LOG_DEST: {dest!r}', file=sys.stderr)
-        print(
-            'Must be auto, stderr, syslog, journal, or journald',
-            file=sys.stderr
-        )
-        raise SystemExit(1)
-    level_name = os.environ.get('KVM_SWITCH_LOG_LEVEL', '').strip().upper()
-    if not level_name:
-        level_name = 'DEBUG' if dest == 'stderr' else 'INFO'
-    level = getattr(logging, level_name, None)
-    if not isinstance(level, int):
-        print(f'Invalid KVM_SWITCH_LOG_LEVEL: {level_name!r}', file=sys.stderr)
-        print(
-            'Must be DEBUG, INFO, WARNING, ERROR, or CRITICAL', file=sys.stderr
-        )
-        raise SystemExit(1)
+    if sys.stderr.isatty():
+        dest, level = 'stderr', logging.DEBUG
+    else:
+        dest, level = 'syslog', logging.INFO
+    env_dest = os.environ.get('KVM_SWITCH_LOG_DEST', '').strip().lower()
+    if env_dest in ('stderr', 'syslog'):
+        dest = env_dest
+    env_level_name = os.environ.get('KVM_SWITCH_LOG_LEVEL', '').strip().upper()
+    if env_level_name:
+        env_level = logging.getLevelNamesMapping().get(env_level_name)
+        if env_level:
+            level = env_level
     logger.setLevel(level)
     if dest == 'stderr':
         handler: logging.Handler = logging.StreamHandler(stream=sys.stderr)
@@ -49,8 +39,14 @@ def setup_logging() -> None:
         )
     else:
         handler = logging.handlers.SysLogHandler(address='/dev/log')
-        handler.ident = 'kvm-switch: '
+        handler.ident = 'kvm-switch'
     logger.addHandler(handler)
+    if env_dest and dest != env_dest:
+        logger.warning("Ignoring invalid KVM_SWITCH_LOG_DEST: '%s'", env_dest)
+    if env_level_name and not env_level:
+        logger.warning(
+            "Ignoring invalid KVM_SWITCH_LOG_LEVEL: '%s'", env_level_name
+        )
 
 def is_new_hub(device: pyudev.Device) -> bool:
     return (
