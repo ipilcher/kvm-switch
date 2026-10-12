@@ -15,7 +15,7 @@ import sdbus
 DOWNSTREAM_USB_VENDOR: typing.Final = '1a40'
 DOWNSTREAM_USB_MODEL: typing.Final = '0101'
 
-hub_devpath: str | None = None
+usb_devpath: str | None = None
 logger: typing.Final = logging.getLogger('kvm-switch')
 
 def setup_logging() -> None:
@@ -48,9 +48,9 @@ def setup_logging() -> None:
             "Ignoring invalid KVM_SWITCH_LOG_LEVEL: '%s'", env_level_name
         )
 
-def is_new_hub(device: pyudev.Device) -> bool:
+def is_new_dev(device: pyudev.Device) -> bool:
     return (
-        hub_devpath is None
+        usb_devpath is None
         and device.device_type == 'usb_device'
         and device.get('ID_VENDOR_ID') == DOWNSTREAM_USB_VENDOR
         and device.get('ID_MODEL_ID') == DOWNSTREAM_USB_MODEL
@@ -89,7 +89,7 @@ def lock_screens() -> None:
         screensaver.lock()
 
 def main() -> None:
-    global hub_devpath
+    global usb_devpath
     setup_logging()
     context: typing.Final = pyudev.Context()
     monitor: typing.Final = pyudev.Monitor.from_netlink(context)
@@ -98,24 +98,24 @@ def main() -> None:
     monitor.start()
     # Check existing devices
     for device in context.list_devices(subsystem='usb'):
-        if is_new_hub(device):
-            hub_devpath = device.get('DEVPATH')
-            logger.debug('Found existing downstream device at %s', hub_devpath)
+        if is_new_dev(device):
+            usb_devpath = device.get('DEVPATH')
+            logger.debug('Found existing downstream device at %s', usb_devpath)
             break
     else:
         logger.debug('Existing downstream device not found')
     logger.info('Waiting for downstream device events')
-    # Process events; is_new_hub() guards against "adding" an existing hub
+    # Process events; is_new_dev() guards against redundant add events
     for action, device in monitor:
-        if action == 'add' and is_new_hub(device):
-            hub_devpath = device.get('DEVPATH')
-            logger.debug('Found new downstream device at %s', hub_devpath)
+        if action == 'add' and is_new_dev(device):
+            usb_devpath = device.get('DEVPATH')
+            logger.debug('Found new downstream device at %s', usb_devpath)
             logger.info('KVM switched to this system; waking screens')
             wake_screens()
-        elif action == 'remove' and device.get('DEVPATH') == hub_devpath:
-            logger.debug('Downstream device at %s was removed', hub_devpath)
+        elif action == 'remove' and device.get('DEVPATH') == usb_devpath:
+            logger.debug('Downstream device at %s was removed', usb_devpath)
             logger.info('KVM switch to another system; locking screens')
-            hub_devpath = None
+            usb_devpath = None
             lock_screens()
         else:
             logger.debug(
