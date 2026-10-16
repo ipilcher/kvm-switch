@@ -1,1 +1,5 @@
 __pycache__/
+kbdsync/kbdsync
+kbdsync/kbdsync.if
+kbdsync/kbdsync.pp
+kbdsync/tmp/
