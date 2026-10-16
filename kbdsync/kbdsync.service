@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 Ian Pilcher <arequipeno@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Unit]
+Description=Resync keyboard LED state after a KVM switch
+After=basic.target
+Before=multi-user.target
+
+[Service]
+Type=exec
+RuntimeDirectory=kbdsync
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/bin/mkfifo -m 0600 -Z ${RUNTIME_DIRECTORY}/kbdsync.fifo
+ExecStart=/usr/local/bin/kbdsync --debug
+DynamicUser=yes
+PrivateUsers=yes
+SupplementaryGroups=uinput
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+UMask=0077
+PrivateDevices=yes
+DevicePolicy=closed
+BindPaths=/dev/uinput
+DeviceAllow=/dev/uinput w
+RestrictAddressFamilies=AF_UNIX
+PrivateNetwork=yes
+IPAddressDeny=any
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+SystemCallFilter=@system-service mknod mknodat
+SystemCallFilter=~@privileged @resources
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

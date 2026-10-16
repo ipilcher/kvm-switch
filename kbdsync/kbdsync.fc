@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Ian Pilcher <arequipeno@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+/usr/local/bin/kbdsync		--	gen_context(system_u:object_r:kbdsync_exec_t,s0)
+/usr/bin/kbdsync		--	gen_context(system_u:object_r:kbdsync_exec_t,s0)
+/run/kbdsync(/.*)?			gen_context(system_u:object_r:kbdsync_fifo_t,s0)
+/run/private/kbdsync(/.*)?		gen_context(system_u:object_r:kbdsync_fifo_t,s0)

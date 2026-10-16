@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026 Ian Pilcher <arequipeno@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+policy_module(kbdsync, 0)
+
+require {
+	attribute domain;
+	attribute entry_type;
+	attribute file_type;
+	role system_r;
+	type devlog_t;
+	type event_device_t;
+	type init_t;
+	type init_var_run_t;
+	type kernel_t;
+	type syslogd_var_run_t;
+	type var_run_t;
+}
+
+type kbdsync_t;
+type kbdsync_exec_t;
+type kbdsync_fifo_t;
+
+typeattribute kbdsync_t domain;
+typeattribute kbdsync_exec_t file_type, entry_type;
+typeattribute kbdsync_fifo_t file_type;
+
+role system_r types kbdsync_t;
+
+# systemd & mkfifo permissions
+type_transition init_t kbdsync_exec_t:process kbdsync_t;
+allow init_t kbdsync_exec_t:file { read getattr open execute map };
+allow init_t kbdsync_t:process { transition sigkill sigstop signull signal getpgid };
+allow init_t kbdsync_t:process2 { nnp_transition };
+allow init_t kbdsync_fifo_t:dir { create setattr mounton write remove_name rmdir };
+allow init_t kbdsync_fifo_t:fifo_file { unlink };
+type_transition init_t var_run_t:lnk_file kbdsync_fifo_t "kbdsync";
+allow init_t kbdsync_fifo_t:lnk_file { create read };
+
+# Basic execution
+allow kbdsync_t kbdsync_exec_t:file { entrypoint read getattr open execute map };
+allow kbdsync_t init_t:process { sigchld };
+
+# Logging via syslog
+allow kbdsync_t kbdsync_t:unix_dgram_socket { create connect write };
+allow kbdsync_t devlog_t:lnk_file { read };
+allow kbdsync_t init_var_run_t:dir { search };
+allow kbdsync_t syslogd_var_run_t:dir { search };
+allow kbdsync_t devlog_t:sock_file { write };
+allow kbdsync_t kernel_t:unix_dgram_socket { sendto };
+
+# Logging via stderr
+allow kbdsync_t init_t:unix_stream_socket { read write getattr ioctl };
+
+# FIFO
+allow kbdsync_t kbdsync_fifo_t:dir { search };
+allow kbdsync_t kbdsync_fifo_t:fifo_file { read write open getattr };
+
+# /dev/uinput
+allow kbdsync_t event_device_t:chr_file { write open ioctl };
+
+# dontaudit
+dontaudit init_t kbdsync_t:process { siginh };

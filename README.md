@@ -25,6 +25,8 @@ DOWNSTREAM_USB_VENDOR: typing.Final = '1a40'
 DOWNSTREAM_USB_MODEL: typing.Final = '0101'
 ```
 
+To keep keyboard LEDs in sync, see [`kbdsync`](kbdsync/kbdsync.md).
+
 ## Installation
 
 * `cp kvm-switch.py ~/.local/bin/`
