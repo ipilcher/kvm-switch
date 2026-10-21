@@ -21,7 +21,7 @@ as `root`, create a group that allows access to the device.
 Create the `uinput` group.
 
 ```
-$ sudo group add -r uinput
+$ sudo groupadd -r uinput
 ```
 
 Create the `udev` rule for `/dev/uinput`.
